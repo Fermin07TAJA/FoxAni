@@ -1,0 +1,10 @@
+# Exact folder names allowed (in addition to HV## ET## AK## FA##)
+DROPPED
+Pinned
+
+# You can also whitelist prefixes by ending with *
+# Example: any folder that starts with "HV" (overrides the strict HV## rule if you want)
+# HV*
+SP*
+Spec*
+

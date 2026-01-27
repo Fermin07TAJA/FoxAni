@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body { font: 13px sans-serif; margin: 10px; min-width: 340px; }
+      button { width: 100%; padding: 8px; margin-bottom: 8px; }
+      #status { margin: 8px 0; white-space: pre-wrap; }
+      #list { max-height: 240px; overflow: auto; border: 1px solid #ccc; padding: 6px; border-radius: 6px; }
+      .row { display: flex; gap: 8px; align-items: center; padding: 2px 0; }
+      .row label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .controls { display: flex; gap: 8px; margin: 8px 0; }
+      .controls button { width: auto; flex: 1; margin: 0; }
+    </style>
+  </head>
+  <body>
+    <button id="scanBtn">Scan folders</button>
+
+    <div class="controls">
+      <button id="allBtn" disabled>Select all</button>
+      <button id="noneBtn" disabled>Select none</button>
+    </div>
+
+    <div id="list"></div>
+
+    <button id="coversBtn" disabled>Generate Covers (CSV only)</button>
+    <button id="pageBtn">Provide Webpage (renderer.html)</button>
+
+    <div id="status"></div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

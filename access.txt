@@ -1,0 +1,3 @@
+about:debugging#/runtime/this-firefox
+
+Load Temporary Add-on...
