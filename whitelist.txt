@@ -1,4 +1,7 @@
-# Exact folder names allowed (in addition to HV## ET## AK## FA##)
+# Exact folder names allowed SP/AK
+# (HV##   SP##   ET## FA##)
+# (WINTER SPRING ETE  FALL)
+# (JAN    APRIL  JUL  OCT )
 DROPPED
 Pinned
 
@@ -6,5 +9,9 @@ Pinned
 # Example: any folder that starts with "HV" (overrides the strict HV## rule if you want)
 # HV*
 SP*
+SU*
 Spec*
+A_C
+INC
+R
 
