@@ -13,7 +13,6 @@
     "bookmarks",
     "downloads",
     "https://api.jikan.moe/*"
-
   ],
 
   "background": {
@@ -23,5 +22,15 @@
   "browser_action": {
     "default_title": "FoxAni Export",
     "default_popup": "popup.html"
+  },
+
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "foxani@local",
+      "data_collection_permissions": {
+        "required": ["none"],
+        "optional": []
+      }
+    }
   }
 }
