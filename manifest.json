@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "FoxAni",
-  "version": "1.1",
+  "version": "1.2",
   "description": "Exports bookmarks based on folder naming scheme / whitelist",
 
   "icons": {
@@ -12,7 +12,8 @@
   "permissions": [
     "bookmarks",
     "downloads",
-    "https://api.jikan.moe/*"
+    "https://api.jikan.moe/*",
+    "https://graphql.anilist.co/*"
   ],
 
   "background": {

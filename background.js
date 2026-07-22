@@ -78,16 +78,65 @@ async function removeExistingDownloadIfAny(targetFilename) {
 }
 
 // ---------------- Jikan (MAL proxy) ----------------
-async function jikanCoverByTitle(title) {
-  const url = `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(title)}&limit=1`;
-  const r = await fetch(url);
-  if (!r.ok) return "";
+// async function jikanCoverByTitle(title) {
+//   const url = `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(title)}&limit=1`;
+//   const r = await fetch(url);
+//   console.log(title, r.status);
+//   if (!r.ok) return "";
+
+//   const j = await r.json();
+//   const a = j?.data?.[0];
+//   if (!a) return "";
+
+//   return a?.images?.jpg?.image_url || a?.images?.webp?.image_url || "";
+// }
+
+// ---------------- AniList ----------------
+async function aniListCoverByTitle(title) {
+  const query = `
+    query ($search: String) {
+      Media(search: $search) {
+        coverImage {
+          extraLarge
+          large
+          medium
+        }
+      }
+    }
+  `;
+
+  const r = await fetch("https://graphql.anilist.co", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Accept": "application/json"
+    },
+    body: JSON.stringify({
+      query,
+      variables: { search: title }
+    })
+  });
+
+  console.log(title, r.status);
+
+  if (!r.ok) {
+    // AniList tells you how long to wait.
+    if (r.status === 429) {
+      console.warn(
+        `Rate limited. Retry after ${r.headers.get("Retry-After")} seconds.`
+      );
+    }
+    return "";
+  }
 
   const j = await r.json();
-  const a = j?.data?.[0];
-  if (!a) return "";
 
-  return a?.images?.jpg?.image_url || a?.images?.webp?.image_url || "";
+  return (
+    j?.data?.Media?.coverImage?.extraLarge ||
+    j?.data?.Media?.coverImage?.large ||
+    j?.data?.Media?.coverImage?.medium ||
+    ""
+  );
 }
 
 // ---------------- Scan + Export ----------------
@@ -118,9 +167,10 @@ async function scanMatchedFolders() {
 async function buildCsvRowsWithImages(bookmarks) {
   const rows = [];
   for (const b of bookmarks) {
-    const img = await jikanCoverByTitle(b.title);
+    // const img = await jikanCoverByTitle(b.title);
+    const img = await aniListCoverByTitle(b.title);
     rows.push({ img, title: b.title, url: b.url });
-    await sleep(350); // throttle
+    await sleep(1000);; // throttle
   }
   return rows;
 }
