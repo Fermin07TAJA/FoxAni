@@ -1,0 +1,38 @@
+fetch("https://graphql.anilist.co", {
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+    },
+    body: JSON.stringify({
+        query: `
+        {
+          Media(search: "One Piece", type: ANIME) {
+            coverImage {
+              extraLarge
+            }
+          }
+        }`
+    })
+}).then(r => r.text()).then(console.log)
+
+
+fetch("https://graphql.anilist.co", {
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+    },
+    body: JSON.stringify({
+        query: `
+        {
+          Media(search: "", type: ANIME) {
+            coverImage {
+              extraLarge
+            }
+          }
+        }`
+    })
+}).then(r => r.text()).then(console.log)
+
+https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/
