@@ -91,17 +91,78 @@ async function removeExistingDownloadIfAny(targetFilename) {
 //   return a?.images?.jpg?.image_url || a?.images?.webp?.image_url || "";
 // }
 
-// ---------------- AniList ----------------
-async function aniListCoverByTitle(title) {
-  const query = `
-    query ($search: String) {
-      Media(search: $search) {
+// // ---------------- AniList ----------------
+// async function aniListCoverByTitle(title) {
+//   const query = `
+//     query ($search: String) {
+//       Media(search: $search) {
+//         coverImage {
+//           extraLarge
+//           large
+//           medium
+//         }
+//       }
+//     }
+//   `;
+
+//   const r = await fetch("https://graphql.anilist.co", {
+//     method: "POST",
+//     headers: {
+//       "Content-Type": "application/json",
+//       "Accept": "application/json"
+//     },
+//     body: JSON.stringify({
+//       query,
+//       variables: { search: title }
+//     })
+//   });
+
+//   console.log(title, r.status);
+
+//   if (!r.ok) {
+//     // AniList tells you how long to wait.
+//     if (r.status === 429) {
+//       console.warn(
+//         `Rate limited. Retry after ${r.headers.get("Retry-After")} seconds.`
+//       );
+//     }
+//     return "";
+//   }
+
+//   const j = await r.json();
+
+//   return (
+//     j?.data?.Media?.coverImage?.extraLarge ||
+//     j?.data?.Media?.coverImage?.large ||
+//     j?.data?.Media?.coverImage?.medium ||
+//     ""
+//   );
+// }
+
+async function aniListCoverBatch(titles) {
+  const variables = {};
+  const parts = [];
+
+  titles.forEach((title, i) => {
+    const varName = `t${i}`;
+    variables[varName] = title;
+
+    parts.push(`
+      m${i}: Media(search: $${varName}) {
         coverImage {
           extraLarge
           large
           medium
         }
       }
+    `);
+  });
+
+  const query = `
+    query(
+      ${titles.map((_, i) => `$t${i}: String`).join(", ")}
+    ) {
+      ${parts.join("\n")}
     }
   `;
 
@@ -113,30 +174,28 @@ async function aniListCoverByTitle(title) {
     },
     body: JSON.stringify({
       query,
-      variables: { search: title }
+      variables
     })
   });
 
-  console.log(title, r.status);
-
-  if (!r.ok) {
-    // AniList tells you how long to wait.
-    if (r.status === 429) {
-      console.warn(
-        `Rate limited. Retry after ${r.headers.get("Retry-After")} seconds.`
-      );
-    }
-    return "";
-  }
+  if (!r.ok)
+    throw new Error(`AniList HTTP ${r.status}`);
 
   const j = await r.json();
 
-  return (
-    j?.data?.Media?.coverImage?.extraLarge ||
-    j?.data?.Media?.coverImage?.large ||
-    j?.data?.Media?.coverImage?.medium ||
-    ""
-  );
+  const map = new Map();
+
+  titles.forEach((title, i) => {
+    const img =
+      j.data?.[`m${i}`]?.coverImage?.extraLarge ||
+      j.data?.[`m${i}`]?.coverImage?.large ||
+      j.data?.[`m${i}`]?.coverImage?.medium ||
+      "";
+
+    map.set(title, img);
+  });
+
+  return map;
 }
 
 // ---------------- Scan + Export ----------------
@@ -164,15 +223,27 @@ async function scanMatchedFolders() {
   return found;
 }
 
+// async function buildCsvRowsWithImages(bookmarks) {
+//   const rows = [];
+//   for (const b of bookmarks) {
+//     // const img = await jikanCoverByTitle(b.title);
+//     const img = await aniListCoverByTitle(b.title);
+//     rows.push({ img, title: b.title, url: b.url });
+//     await sleep(1000);; // throttle
+//   }
+//   return rows;
+// }
+
 async function buildCsvRowsWithImages(bookmarks) {
-  const rows = [];
-  for (const b of bookmarks) {
-    // const img = await jikanCoverByTitle(b.title);
-    const img = await aniListCoverByTitle(b.title);
-    rows.push({ img, title: b.title, url: b.url });
-    await sleep(1000);; // throttle
-  }
-  return rows;
+  const covers = await aniListCoverBatch(
+    bookmarks.map(b => b.title)
+  );
+
+  return bookmarks.map(b => ({
+    img: covers.get(b.title) || "",
+    title: b.title,
+    url: b.url
+  }));
 }
 
 async function exportFolderToCsvWithImages(folderTitle, bookmarks) {
