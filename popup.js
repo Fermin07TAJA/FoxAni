@@ -10,6 +10,55 @@ const noneBtn = document.getElementById("noneBtn");
 
 let currentFolders = [];
 
+const PREFIX_ORDER = {
+  HV: 0,
+  SP: 1,
+  ET: 2,
+  FA: 3
+};
+
+function sortFolders(folders) {
+  return [...folders].sort((a, b) => {
+    const ma = /^([A-Z]+)(\d+)$/.exec(a.title);
+    const mb = /^([A-Z]+)(\d+)$/.exec(b.title);
+
+    // Non-season folders (whitelist entries) first
+    if (!ma && !mb)
+      return a.title.localeCompare(b.title);
+
+    if (!ma)
+      return -1;
+
+    if (!mb)
+      return 1;
+
+    const [, pa, ya] = ma;
+    const [, pb, yb] = mb;
+
+    // Unknown prefixes (whitelist entries like AK24, IN31, etc.) first
+    const knownA = pa in PREFIX_ORDER;
+    const knownB = pb in PREFIX_ORDER;
+
+    if (!knownA && !knownB)
+      return a.title.localeCompare(b.title);
+
+    if (!knownA)
+      return -1;
+
+    if (!knownB)
+      return 1;
+
+    // Then by season number
+    const na = Number(ya);
+    const nb = Number(yb);
+
+    if (na !== nb)
+      return na - nb;
+
+    // Then HV, SP, ET, FA
+    return PREFIX_ORDER[pa] - PREFIX_ORDER[pb];
+  });
+}
 function renderList(folders) {
   listEl.innerHTML = "";
   if (!folders.length) {
@@ -26,7 +75,7 @@ function renderList(folders) {
 
     const cb = document.createElement("input");
     cb.type = "checkbox";
-    cb.checked = true;
+    cb.checked = false;
     cb.dataset.title = f.title;
 
     const label = document.createElement("label");
@@ -58,7 +107,8 @@ scanBtn.addEventListener("click", async () => {
 
   try {
     const res = await browser.runtime.sendMessage({ type: "SCAN_FOLDERS" });
-    currentFolders = res.folders || [];
+    // currentFolders = res.folders || [];
+    currentFolders = sortFolders(res.folders || []);
     renderList(currentFolders);
     statusEl.textContent = `Found ${currentFolders.length} candidate folder(s).`;
   } catch (e) {
