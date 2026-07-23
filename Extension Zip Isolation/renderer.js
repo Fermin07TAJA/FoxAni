@@ -8,6 +8,7 @@ const drop = document.getElementById("drop");
 const toast = document.getElementById("toast");
 
 const CSV_FILES = [
+    "Prime.csv",
     "Top 20.csv",
     "Allie.csv", "Prepa.csv",
     "ET20.csv", "FA20.csv",
@@ -27,14 +28,9 @@ const CSV_FILES = [
     "HV33.csv", "SP33.csv", "ET33.csv", "FA33.csv",
     "HV34.csv", "SP34.csv", "ET34.csv", "FA34.csv",
     "HV35.csv", "SP35.csv", "ET35.csv", "FA35.csv",
+    "Sequels.csv",
 
-    "Current.csv",
-    "To Watch.csv",
-    "Dramas.csv",
-    "DROPPED.csv",
-    "INC.csv",
-    "Plan To Watch.csv",
-    "ADD.csv"    
+    "Watchlist.csv"
 ];
 
 const TYPE_COLORS = new Map([
@@ -46,6 +42,7 @@ const TYPE_COLORS = new Map([
     ["shanon", "#b7ddff"],
     ["blythe", "#f3e9b2"],
     ["top 20", "#ffe44dd5"],
+    ["prime", "#ffc7fbd5"],
     ["peliculas top", "#46b78a"],
     ["honorable mentions", "#49a8df"],
     ["nancy", "#ff7b00"],
@@ -55,13 +52,18 @@ const TYPE_COLORS = new Map([
     ["inc", "#949595"],
     ["t", "#06300f"],
     ["francis", "#a2c7f2"],
-    ["zyun", "#a2c7f2"]
+    ["zyun", "#a2c7f2"],
+    ["dub", "#f0aeae"],
+    ["manga", "#b3b3b3"],
+    ["peli", "#c8f3b7"],
+    ["live action", "#7d0000"]
 ]);
 
 const DARK_TYPES = new Set([
     "allie",
     "e-lissa",
-    "t"
+    "t",
+    "live action"
 ]);
 
 const LOADED_CSVS = new Map();
