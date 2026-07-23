@@ -5,12 +5,15 @@ const folderInput = document.getElementById("folderInput");
 const hint = document.getElementById("hint");
 const csvButtons = document.getElementById("csvButtons");
 const drop = document.getElementById("drop");
+const toast = document.getElementById("toast");
 
 const CSV_FILES = [
     "Top 20.csv",
-    "Anime Before Seasonal Tracking.csv",
-    
+    "Allie.csv", "Prepa.csv",
+    "ET20.csv", "FA20.csv",
+    "SP21.csv",             "FA21.csv",
     "HV22.csv", "SP22.csv", "ET22.csv", "FA22.csv",
+    "21-22.csv",
     "HV23.csv", "SP23.csv", "ET23.csv", "FA23.csv",
     "HV24.csv", "SP24.csv", "ET24.csv", "FA24.csv",
     "HV25.csv", "SP25.csv", "ET25.csv", "FA25.csv",
@@ -35,15 +38,30 @@ const CSV_FILES = [
 ];
 
 const TYPE_COLORS = new Map([
-    ["blanon", "#b8e6b8"],
+    ["allie", "#440161"],
     ["e-lissa", "#202020"],
+    ["blanon", "#b8e6b8"],
     ["season favorite", "#ffd700"],
     ["marco", "#d84a4a"],
-    ["shanon", "#b7ddff"]
+    ["shanon", "#b7ddff"],
+    ["blythe", "#f3e9b2"],
+    ["top 20", "#ffe44dd5"],
+    ["peliculas top", "#46b78a"],
+    ["honorable mentions", "#49a8df"],
+    ["nancy", "#ff7b00"],
+    ["madeline", "#53d8ac"],
+    ["joyce", "#53d8ac"],
+    ["dropped", "#949595"],
+    ["inc", "#949595"],
+    ["t", "#06300f"],
+    ["francis", "#a2c7f2"],
+    ["zyun", "#a2c7f2"]
 ]);
 
 const DARK_TYPES = new Set([
-    "e-lissa"
+    "allie",
+    "e-lissa",
+    "t"
 ]);
 
 const LOADED_CSVS = new Map();
@@ -92,6 +110,35 @@ drop.addEventListener("drop", async e => {
 
     await loadFiles(files, false);
 });
+
+document.addEventListener("keydown", e => {
+
+    if ((e.ctrlKey || e.metaKey) &&
+        e.key.toLowerCase() === "s") {
+
+        e.preventDefault();
+
+        showToast("Schtop it. Schtop it Madhav.");
+
+    }
+
+});
+
+let toastTimer;
+
+function showToast(text){
+
+    toast.textContent = text;
+
+    toast.classList.add("show");
+
+    clearTimeout(toastTimer);
+
+    toastTimer = setTimeout(() => {
+        toast.classList.remove("show");
+    }, 400);
+
+}
 
 function createCsvButtons() {
     csvButtons.innerHTML = "";
@@ -400,5 +447,6 @@ function render(items) {
 
     GRID.appendChild(fragment);
 }
+
 
 createCsvButtons();

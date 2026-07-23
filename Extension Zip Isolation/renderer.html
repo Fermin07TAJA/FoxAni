@@ -129,6 +129,27 @@ a{
 a:hover{
     text-decoration:underline;
 }
+
+#toast{
+    position:fixed;
+    left:50%;
+    bottom:24px;
+    transform:translateX(-50%);
+    background:#333;
+    color:white;
+    padding:10px 18px;
+    border-radius:6px;
+    opacity:0;
+    transition:opacity .2s;
+    pointer-events:none;
+    font-size:13px;
+    z-index:9999;
+}
+
+#toast.show{
+    opacity:1;
+}
+
 </style>
 </head>
 
@@ -165,6 +186,8 @@ Select the data folder to load all CSV files, or drag and drop CSV files below.
 <div id="csvButtons"></div>
 
 <div class="grid" id="grid"></div>
+
+<div id="toast"></div>
 
 <script src="renderer.js"></script>
 
