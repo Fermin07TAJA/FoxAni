@@ -4,28 +4,165 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Renderer</title>
+
 <style>
-  body{font:14px sans-serif;margin:16px;background:#fff5f7}
-  h1{font-size:18px;margin:0 0 12px}
-  #hint{margin:8px 0;color:#333}
-  #drop{border:1px dashed #888;border-radius:8px;padding:12px;margin:10px 0;background:rgba(255,255,255,0.6)}
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:10px}
-  .card{display:flex;gap:10px;border:1px solid #ccc;border-radius:8px;padding:10px;background:rgba(255,255,255,0.75)}
-  img,.ph{width:80px;height:112px;object-fit:cover;border-radius:6px;flex:0 0 auto;background:#eee}
-  .meta{display:flex;flex-direction:column;gap:8px;min-width:0}
-  .t{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .ln{display:flex;gap:10px}
-  a{color:#0b5fff;text-decoration:none}
-  a:hover{text-decoration:underline}
+body{
+    font:14px sans-serif;
+    margin:16px;
+    background:#fff5f7;
+}
+
+h1{
+    font-size:18px;
+    margin:0 0 12px;
+}
+
+#hint{
+    margin:8px 0;
+    color:#333;
+}
+
+#drop{
+    border:1px dashed #888;
+    border-radius:8px;
+    padding:12px;
+    margin:10px 0;
+    background:rgba(255,255,255,.6);
+}
+
+#csvButtons{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin:10px 0 14px;
+}
+
+.csv-button{
+    padding:5px 11px;
+    border:1px solid #999;
+    border-radius:999px;
+    background:#eeeeee;
+    color:#222;
+    font:13px sans-serif;
+    cursor:pointer;
+}
+
+.csv-button:hover:not(:disabled){
+    background:#dddddd;
+}
+
+.csv-button.active{
+    background:#333;
+    color:#f0f0f0;
+    border-color:#333;
+}
+
+.csv-button:disabled{
+    opacity:.35;
+    cursor:default;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(340px,1fr));
+    gap:10px;
+}
+
+.card{
+    display:flex;
+    gap:10px;
+    border:1px solid #ccc;
+    border-radius:8px;
+    padding:10px;
+    background:white;
+}
+
+img,.ph{
+    width:80px;
+    height:112px;
+    object-fit:cover;
+    border-radius:6px;
+    flex:0 0 auto;
+    background:#eee;
+}
+
+.meta{
+    display:flex;
+    flex-direction:column;
+    flex:1;
+    min-width:0;
+}
+
+.t{
+    font-weight:600;
+    line-height:1.25em;
+    min-height:3.75em;
+    max-height:3.75em;
+    overflow:hidden;
+    margin-top:6px;
+    margin-bottom:auto;
+    overflow-wrap:anywhere;
+}
+
+.tag{
+    display:inline-block;
+    align-self:flex-start;
+    padding:2px 8px;
+    border-radius:999px;
+    background:rgba(0,0,0,.25);
+    color:white;
+    font-size:11px;
+    font-weight:bold;
+    white-space:nowrap;
+}
+
+.ln{
+    display:flex;
+    gap:10px;
+}
+
+a{
+    color:#0b5fff;
+    text-decoration:none;
+}
+
+a:hover{
+    text-decoration:underline;
+}
 </style>
 </head>
+
 <body>
+
 <h1 id="hdr">Renderer</h1>
 
-<div id="hint">Drop a CSV here or pick one. If this file sits next to a CSV with the same basename, it will try <code>./&lt;basename&gt;.csv</code>.</div>
+<div id="hint">
+Select the data folder to load all CSV files, or drag and drop CSV files below.
+</div>
 
-<input type="file" id="file" accept=".csv" style="display:none" />
-<div id="drop">Drag a CSV here, or <a href="#" id="pick">pick a CSV</a>.</div>
+<input
+    type="file"
+    id="folderInput"
+    webkitdirectory
+    multiple
+    style="display:none"
+>
+
+<input
+    type="file"
+    id="file"
+    accept=".csv"
+    multiple
+    style="display:none"
+>
+
+<div id="drop">
+    <a href="#" id="pickFolder">Select data folder</a>,
+    <a href="#" id="pick">pick CSV files</a>,
+    or drag CSV files here.
+</div>
+
+<div id="csvButtons"></div>
 
 <div class="grid" id="grid"></div>
 

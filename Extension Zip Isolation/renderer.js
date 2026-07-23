@@ -1,116 +1,404 @@
 const GRID = document.getElementById("grid");
-const HDR  = document.getElementById("hdr");
+const HDR = document.getElementById("hdr");
 const fileInput = document.getElementById("file");
+const folderInput = document.getElementById("folderInput");
 const hint = document.getElementById("hint");
-
-document.getElementById("pick").addEventListener("click", (e) => {
-  e.preventDefault();
-  fileInput.click();
-});
-
-fileInput.addEventListener("change", () => {
-  const f = fileInput.files && fileInput.files[0];
-  if (f) readFile(f);
-});
-
+const csvButtons = document.getElementById("csvButtons");
 const drop = document.getElementById("drop");
-drop.addEventListener("dragover", (e) => { e.preventDefault(); drop.style.background = "rgba(255,255,255,0.9)"; });
-drop.addEventListener("dragleave", () => { drop.style.background = ""; });
-drop.addEventListener("drop", (e) => {
-  e.preventDefault();
-  drop.style.background = "";
-  const f = e.dataTransfer.files && e.dataTransfer.files[0];
-  if (f) readFile(f);
+
+const CSV_FILES = [
+    "Top 20.csv",
+    "Anime Before Seasonal Tracking.csv",
+    
+    "HV22.csv", "SP22.csv", "ET22.csv", "FA22.csv",
+    "HV23.csv", "SP23.csv", "ET23.csv", "FA23.csv",
+    "HV24.csv", "SP24.csv", "ET24.csv", "FA24.csv",
+    "HV25.csv", "SP25.csv", "ET25.csv", "FA25.csv",
+    "HV26.csv", "SP26.csv", "ET26.csv", "FA26.csv",
+    "HV27.csv", "SP27.csv", "ET27.csv", "FA27.csv",
+    "HV28.csv", "SP28.csv", "ET28.csv", "FA28.csv",
+    "HV29.csv", "SP29.csv", "ET29.csv", "FA29.csv",
+    "HV30.csv", "SP30.csv", "ET30.csv", "FA30.csv",
+    "HV31.csv", "SP31.csv", "ET31.csv", "FA31.csv",
+    "HV32.csv", "SP32.csv", "ET32.csv", "FA32.csv",
+    "HV33.csv", "SP33.csv", "ET33.csv", "FA33.csv",
+    "HV34.csv", "SP34.csv", "ET34.csv", "FA34.csv",
+    "HV35.csv", "SP35.csv", "ET35.csv", "FA35.csv",
+
+    "Current.csv",
+    "To Watch.csv",
+    "Dramas.csv",
+    "DROPPED.csv",
+    "INC.csv",
+    "Plan To Watch.csv",
+    "ADD.csv"    
+];
+
+const TYPE_COLORS = new Map([
+    ["blanon", "#b8e6b8"],
+    ["e-lissa", "#202020"],
+    ["season favorite", "#ffd700"],
+    ["marco", "#d84a4a"],
+    ["shanon", "#b7ddff"]
+]);
+
+const DARK_TYPES = new Set([
+    "e-lissa"
+]);
+
+const LOADED_CSVS = new Map();
+const BUTTONS = new Map();
+
+document.getElementById("pickFolder").addEventListener("click", e => {
+    e.preventDefault();
+    folderInput.click();
 });
 
-function parseCsv(text) {
-  const lines = text.split(/\r?\n/).filter(l => l.trim().length);
-  if (lines.length <= 1) return [];
-  const out = [];
+document.getElementById("pick").addEventListener("click", e => {
+    e.preventDefault();
+    fileInput.click();
+});
 
-  for (let i = 1; i < lines.length; i++) {
-    const line = lines[i];
-    const cols = [];
-    let cur = "";
-    let q = false;
-    for (let k = 0; k < line.length; k++) {
-      const ch = line[k];
-      if (q) {
-        if (ch === '"' && line[k+1] === '"') { cur += '"'; k++; }
-        else if (ch === '"') q = false;
-        else cur += ch;
-      } else {
-        if (ch === '"') q = true;
-        else if (ch === ',') { cols.push(cur); cur = ""; }
-        else cur += ch;
-      }
+folderInput.addEventListener("change", async () => {
+    const files = [...(folderInput.files || [])];
+
+    await loadFiles(files, true);
+
+    folderInput.value = "";
+});
+
+fileInput.addEventListener("change", async () => {
+    const files = [...(fileInput.files || [])];
+
+    await loadFiles(files, false);
+
+    fileInput.value = "";
+});
+
+drop.addEventListener("dragover", e => {
+    e.preventDefault();
+    drop.style.background = "rgba(255,255,255,.9)";
+});
+
+drop.addEventListener("dragleave", () => {
+    drop.style.background = "";
+});
+
+drop.addEventListener("drop", async e => {
+    e.preventDefault();
+    drop.style.background = "";
+
+    const files = [...(e.dataTransfer.files || [])];
+
+    await loadFiles(files, false);
+});
+
+function createCsvButtons() {
+    csvButtons.innerHTML = "";
+    BUTTONS.clear();
+
+    for (const filename of CSV_FILES) {
+        const button = document.createElement("button");
+
+        button.type = "button";
+        button.className = "csv-button";
+        button.textContent = filename.replace(/\.csv$/i, "");
+        button.disabled = true;
+
+        button.addEventListener("click", () => {
+            openLoadedCsv(filename);
+        });
+
+        BUTTONS.set(normalizeFilename(filename), button);
+        csvButtons.appendChild(button);
     }
-    cols.push(cur);
-    const [img, name, url] = cols;
-    out.push({ img: (img||"").trim(), name: (name||"").trim(), url: (url||"").trim() });
-  }
-  return out;
 }
 
-function esc(s){
-  return (s ?? "").toString()
-    .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;").replaceAll("'","&#39;");
+async function loadFiles(files, replaceExisting) {
+    const csvFiles = files.filter(file =>
+        file.name.toLowerCase().endsWith(".csv")
+    );
+
+    if (csvFiles.length === 0) {
+        hint.textContent = "No CSV files were found.";
+        return;
+    }
+
+    if (replaceExisting) {
+        LOADED_CSVS.clear();
+    }
+
+    let loadedCount = 0;
+
+    for (const file of csvFiles) {
+        try {
+            const text = await file.text();
+            const filename = file.name;
+            const key = normalizeFilename(filename);
+
+            LOADED_CSVS.set(key, {
+                filename,
+                items: parseCsv(text)
+            });
+
+            loadedCount++;
+        }
+        catch (error) {
+            console.error("Unable to read file:", file.name, error);
+        }
+    }
+
+    updateCsvButtons();
+
+    hint.textContent =
+        `Loaded ${loadedCount} CSV file${loadedCount === 1 ? "" : "s"}.`;
+
+    openFirstAvailableCsv();
+}
+
+function updateCsvButtons() {
+    for (const [key, button] of BUTTONS) {
+        button.disabled = !LOADED_CSVS.has(key);
+    }
+
+    for (const [key, csv] of LOADED_CSVS) {
+        if (BUTTONS.has(key))
+            continue;
+
+        const button = document.createElement("button");
+
+        button.type = "button";
+        button.className = "csv-button";
+        button.textContent = csv.filename.replace(/\.csv$/i, "");
+
+        button.addEventListener("click", () => {
+            openLoadedCsv(csv.filename);
+        });
+
+        BUTTONS.set(key, button);
+        csvButtons.appendChild(button);
+    }
+}
+
+function openFirstAvailableCsv() {
+    for (const filename of CSV_FILES) {
+        if (LOADED_CSVS.has(normalizeFilename(filename))) {
+            openLoadedCsv(filename);
+            return;
+        }
+    }
+
+    const first = LOADED_CSVS.values().next().value;
+
+    if (first)
+        openLoadedCsv(first.filename);
+}
+
+function openLoadedCsv(filename) {
+    const key = normalizeFilename(filename);
+    const csv = LOADED_CSVS.get(key);
+
+    if (!csv)
+        return;
+
+    setActiveButton(key);
+    setTitleFromName(csv.filename);
+    render(csv.items);
+
+    hint.textContent =
+        `${csv.filename}: ${csv.items.length} item` +
+        `${csv.items.length === 1 ? "" : "s"}.`;
+}
+
+function setActiveButton(activeKey) {
+    for (const [key, button] of BUTTONS) {
+        button.classList.toggle("active", key === activeKey);
+    }
+}
+
+function normalizeFilename(filename) {
+    return (filename || "")
+        .trim()
+        .toLowerCase();
+}
+
+function parseCsv(text) {
+    const rows = parseCsvRows(text);
+
+    if (rows.length === 0)
+        return [];
+
+    const firstRow = rows[0].map(value =>
+        (value || "").trim().toLowerCase()
+    );
+
+    const hasHeader =
+        firstRow.includes("imageurl") ||
+        firstRow.includes("name") ||
+        firstRow.includes("url") ||
+        firstRow.includes("type");
+
+    const startIndex = hasHeader ? 1 : 0;
+    const out = [];
+
+    for (let i = startIndex; i < rows.length; i++) {
+        const cols = rows[i];
+
+        if (cols.every(value => !String(value || "").trim()))
+            continue;
+
+        const [img, name, url, type] = cols;
+
+        out.push({
+            img: (img || "").trim(),
+            name: (name || "").trim(),
+            url: (url || "").trim(),
+            type: (type || "").trim()
+        });
+    }
+
+    return out;
+}
+
+function parseCsvRows(text) {
+    const rows = [];
+
+    let row = [];
+    let cur = "";
+    let quoted = false;
+
+    for (let i = 0; i < text.length; i++) {
+        const ch = text[i];
+
+        if (quoted) {
+            if (ch === '"' && text[i + 1] === '"') {
+                cur += '"';
+                i++;
+            }
+            else if (ch === '"') {
+                quoted = false;
+            }
+            else {
+                cur += ch;
+            }
+
+            continue;
+        }
+
+        if (ch === '"') {
+            quoted = true;
+        }
+        else if (ch === ",") {
+            row.push(cur);
+            cur = "";
+        }
+        else if (ch === "\n") {
+            row.push(cur);
+            rows.push(row);
+
+            row = [];
+            cur = "";
+        }
+        else if (ch !== "\r") {
+            cur += ch;
+        }
+    }
+
+    if (cur.length > 0 || row.length > 0) {
+        row.push(cur);
+        rows.push(row);
+    }
+
+    return rows;
+}
+
+function esc(value) {
+    return (value ?? "")
+        .toString()
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
 }
 
 function setTitleFromName(name) {
-  const base = (name || "Renderer").replace(/\.csv$/i, "");
-  document.title = base;
-  HDR.textContent = base;
+    const base = (name || "Renderer").replace(/\.csv$/i, "");
+
+    document.title = base;
+    HDR.textContent = base;
 }
 
 function render(items) {
-  GRID.innerHTML = "";
-  for (const it of items) {
-    const img = it.img
-      ? `<img src="${esc(it.img)}" alt="${esc(it.name)}" loading="lazy">`
-      : `<div class="ph"></div>`;
+    GRID.innerHTML = "";
 
-    const card = document.createElement("div");
-    card.className = "card";
-    card.innerHTML = `
-      ${img}
-      <div class="meta">
-        <div class="t">${esc(it.name)}</div>
-        <div class="ln"><a href="${esc(it.url)}" target="_blank" rel="noreferrer">Link</a></div>
-      </div>
-    `;
-    GRID.appendChild(card);
-  }
+    if (items.length === 0) {
+        GRID.innerHTML = "<div>No entries found in this CSV.</div>";
+        return;
+    }
+
+    const fragment = document.createDocumentFragment();
+
+    for (const item of items) {
+        const card = document.createElement("div");
+        card.className = "card";
+
+        const typeKey = item.type.toLowerCase();
+        const isDark = item.type && DARK_TYPES.has(typeKey);
+
+        if (item.type) {
+            const color = TYPE_COLORS.get(typeKey);
+
+            if (color)
+                card.style.backgroundColor = color;
+        }
+
+        const imageHtml = item.img
+            ? `
+                <img
+                    src="${esc(item.img)}"
+                    loading="lazy"
+                    alt="${esc(item.name)}"
+                >
+              `
+            : `<div class="ph"></div>`;
+
+        const tagHtml = item.type
+            ? `<div class="tag">${esc(item.type.toUpperCase())}</div>`
+            : "";
+
+        const linkHtml = item.url
+            ? `
+                <a
+                    href="${esc(item.url)}"
+                    target="_blank"
+                    rel="noreferrer"
+                >
+                    Link
+                </a>
+              `
+            : "";
+
+        card.innerHTML = `
+            ${imageHtml}
+
+            <div class="meta">
+                ${tagHtml}
+
+                <div class="t"${isDark ? ' style="color:#e8e8e8"' : ""}>
+                    ${esc(item.name)}
+                </div>
+
+                <div class="ln">
+                    ${linkHtml}
+                </div>
+            </div>
+        `;
+
+        fragment.appendChild(card);
+    }
+
+    GRID.appendChild(fragment);
 }
 
-async function tryFetchSiblingCsv() {
-  // If renderer.html is renamed to HV24.html, it will try HV24.csv.
-  const here = location.pathname.split("/").pop() || "renderer.html";
-  const base = here.replace(/\.html$/i, "");
-  const guess = base + ".csv";
-
-  try {
-    const r = await fetch("./" + guess);
-    if (!r.ok) throw new Error("fetch not ok");
-    const t = await r.text();
-    setTitleFromName(guess);
-    render(parseCsv(t));
-    hint.textContent = "Loaded via fetch: " + guess;
-    return true;
-  } catch {
-    hint.textContent = "Fetch blocked/unavailable. Use drag-drop or file picker to load a CSV.";
-    return false;
-  }
-}
-
-function readFile(file) {
-  const fr = new FileReader();
-  fr.onload = () => {
-    setTitleFromName(file.name);
-    render(parseCsv(fr.result));
-  };
-  fr.readAsText(file);
-}
-
-tryFetchSiblingCsv();
+createCsvButtons();
