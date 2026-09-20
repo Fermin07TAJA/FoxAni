@@ -7,6 +7,8 @@ const csvButtons = document.getElementById("csvButtons");
 const drop = document.getElementById("drop");
 const toast = document.getElementById("toast");
 
+const avis_preferred = "ET26.csv";
+
 const CSV_FILES = [
     "Prime.csv",
     "Top 20.csv",
@@ -231,17 +233,17 @@ function updateCsvButtons() {
 }
 
 function openFirstAvailableCsv() {
-    for (const filename of CSV_FILES) {
-        if (LOADED_CSVS.has(normalizeFilename(filename))) {
-            openLoadedCsv(filename);
-            return;
-        }
+    if (avis_preferred &&
+        LOADED_CSVS.has(normalizeFilename(avis_preferred))) {
+        openLoadedCsv(avis_preferred);
+        return;
     }
 
     const first = LOADED_CSVS.values().next().value;
 
-    if (first)
+    if (first) {
         openLoadedCsv(first.filename);
+    }
 }
 
 function openLoadedCsv(filename) {
