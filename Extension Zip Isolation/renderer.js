@@ -56,6 +56,7 @@ const TYPE_COLORS = new Map([
     ["dub", "#f0aeae"],
     ["manga", "#b3b3b3"],
     ["peli", "#c8f3b7"],
+    ["dating", "#ffbcf7"],
     ["live action", "#7d0000"]
 ]);
 
@@ -434,7 +435,11 @@ function render(items) {
             <div class="meta">
                 ${tagHtml}
 
-                <div class="t"${isDark ? ' style="color:#e8e8e8"' : ""}>
+                <div
+                    class="t"
+                    title="Click to copy"
+                    ${isDark ? ' style="color:#e8e8e8"' : ""}
+                >
                     ${esc(item.name)}
                 </div>
 
@@ -443,6 +448,20 @@ function render(items) {
                 </div>
             </div>
         `;
+
+        const title = card.querySelector(".t");
+
+        title.addEventListener("click", async () => {
+
+            try {
+                await navigator.clipboard.writeText(item.name);
+                showToast(item.name);
+            }
+            catch {
+                showToast("Your Mom");
+            }
+
+        });
 
         fragment.appendChild(card);
     }
