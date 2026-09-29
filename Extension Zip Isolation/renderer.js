@@ -38,6 +38,7 @@ const CSV_FILES = [
 const TYPE_COLORS = new Map([
     ["allie", "#440161"],
     ["e-lissa", "#202020"],
+    ["e-lissa trial ep", "#202020"],
     ["blanon", "#b8e6b8"],
     ["season favorite", "#ffd700"],
     ["marco", "#d84a4a"],
@@ -65,6 +66,7 @@ const TYPE_COLORS = new Map([
 const DARK_TYPES = new Set([
     "allie",
     "e-lissa",
+    "e-lissa trial ep",
     "t",
     "live action"
 ]);
