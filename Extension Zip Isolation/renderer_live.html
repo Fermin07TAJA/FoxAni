@@ -1,0 +1,39 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Renderer Live</title>
+<style>
+body{font:14px sans-serif;margin:16px;background:#fff5f7}
+h1{font-size:18px;margin:0 0 12px}
+#hint{margin:8px 0;color:#333}
+#csvButtons{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 14px}
+.csv-button{padding:5px 11px;border:1px solid #999;border-radius:999px;background:#eeeeee;color:#222;font:13px sans-serif;cursor:pointer}
+.csv-button:hover:not(:disabled){background:#dddddd}
+.csv-button.active{background:#333;color:#f0f0f0;border-color:#333}
+.csv-button:disabled{opacity:.35;cursor:default}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:10px}
+.card{display:flex;gap:10px;border:1px solid #ccc;border-radius:8px;padding:10px;background:white}
+img,.ph{width:80px;height:112px;object-fit:cover;border-radius:6px;flex:0 0 auto;background:#eee}
+.meta{display:flex;flex-direction:column;flex:1;min-width:0}
+.tag{display:inline-block;align-self:flex-start;padding:2px 8px;border-radius:999px;background:rgba(0,0,0,.25);color:white;font-size:11px;font-weight:bold;white-space:nowrap;margin-bottom:5px}
+.t{font-weight:600;line-height:1.25em;min-height:3.75em;max-height:3.75em;overflow:hidden;margin-top:6px;margin-bottom:8px;overflow-wrap:anywhere;cursor:text}
+.tag.editable-text{cursor:text}
+.inline-editor{width:100%;box-sizing:border-box;font:inherit;border:1px solid #888;border-radius:4px;padding:3px 5px;margin:2px 0 6px}
+.editable-text:focus{outline:1px dashed #555;outline-offset:2px}
+.ln{display:flex;align-items:center;gap:10px;margin-top:auto}
+a{color:#0b5fff;text-decoration:none}a:hover{text-decoration:underline}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#333;color:white;padding:10px 18px;border-radius:6px;opacity:0;transition:opacity .2s;pointer-events:none;font-size:13px;z-index:9999}
+#toast.show{opacity:1}
+</style>
+</head>
+<body>
+<h1 id="hdr">Renderer Live</h1>
+<div id="hint">Loading CSV files from the server...</div>
+<div id="csvButtons"></div>
+<div class="grid" id="grid"></div>
+<div id="toast"></div>
+<script src="renderer_live.js"></script>
+</body>
+</html>
