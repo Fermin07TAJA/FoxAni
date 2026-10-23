@@ -4,7 +4,7 @@ const hint = document.getElementById("hint");
 const csvButtons = document.getElementById("csvButtons");
 const toast = document.getElementById("toast");
 
-const avis_preferred = "ET26.csv";
+const avis_preferred = "FA26.csv";
 
 const CSV_FILES = [
     "Prime.csv", "Top 20.csv", "Allie.csv", "Prepa.csv",
@@ -121,7 +121,7 @@ async function openCsv(filename) {
         for (let i = start; i < rows.length; i++) {
             const row = rows[i];
             if (row.every(value => !String(value ?? "").trim())) continue;
-            items.push({ rowIndex: i, img: row[0] || "", name: row[1] || "", url: row[2] || "", type: row[3] || "" });
+            items.push({ rowIndex: i, row, img: row[0] || "", name: row[1] || "", url: row[2] || "", type: row[3] || "" });
         }
         LOADED_CSVS.set(normalizeFilename(filename), { filename, rows, items });
         for (const [key, button] of BUTTONS) button.classList.toggle("active", key === normalizeFilename(filename));
@@ -133,15 +133,7 @@ async function openCsv(filename) {
 const SAVE_QUEUES = new Map();
 let copyTimer;
 
-async function saveItem(filename, item, field, value) {
-    const loaded = LOADED_CSVS.get(normalizeFilename(filename));
-    if (!loaded) return;
-    const row = loaded.rows[item.rowIndex];
-    while (row.length < 4) row.push("");
-    const column = field === "name" ? 1 : 3;
-    const previous = row[column] || "";
-    row[column] = value;
-    item[field] = value;
+function queueCsvSave(filename, loaded) {
     const key = normalizeFilename(filename);
     const previousQueue = SAVE_QUEUES.get(key) || Promise.resolve();
     const currentQueue = previousQueue.catch(() => {}).then(async () => {
@@ -152,16 +144,55 @@ async function saveItem(filename, item, field, value) {
         });
     });
     SAVE_QUEUES.set(key, currentQueue);
+    return currentQueue.finally(() => {
+        if (SAVE_QUEUES.get(key) === currentQueue) SAVE_QUEUES.delete(key);
+    });
+}
+
+async function saveItem(filename, item, field, value) {
+    const loaded = LOADED_CSVS.get(normalizeFilename(filename));
+    if (!loaded) return;
+    const row = loaded.rows[item.rowIndex];
+    while (row.length < 4) row.push("");
+    const column = field === "name" ? 1 : 3;
+    const previous = row[column] || "";
+    row[column] = value;
+    item[field] = value;
     try {
-        await currentQueue;
+        await queueCsvSave(filename, loaded);
         showToast("Saved automatically.");
     } catch (error) {
         row[column] = previous;
         item[field] = previous;
         showToast(`Save failed: ${error.message}`);
         throw error;
-    } finally {
-        if (SAVE_QUEUES.get(key) === currentQueue) SAVE_QUEUES.delete(key);
+    }
+}
+
+async function reorderItems(filename, items, fromIndex, toIndex) {
+    if (fromIndex === toIndex) return;
+    const loaded = LOADED_CSVS.get(normalizeFilename(filename));
+    if (!loaded) return;
+    const previousOrder = [...items];
+    const previousIndices = new Map(items.map(item => [item, item.rowIndex]));
+    const slots = items.map(item => item.rowIndex).sort((a, b) => a - b);
+    const moved = items.splice(fromIndex, 1)[0];
+    items.splice(toIndex, 0, moved);
+    const previousRows = slots.map(index => loaded.rows[index]);
+    for (let i = 0; i < slots.length; i++) {
+        loaded.rows[slots[i]] = items[i].row;
+        items[i].rowIndex = slots[i];
+    }
+    try {
+        await queueCsvSave(filename, loaded);
+        render(filename, items);
+        showToast("Order saved automatically.");
+    } catch (error) {
+        for (let i = 0; i < slots.length; i++) loaded.rows[slots[i]] = previousRows[i];
+        items.splice(0, items.length, ...previousOrder);
+        for (const item of items) item.rowIndex = previousIndices.get(item);
+        render(filename, items);
+        showToast(`Reorder save failed: ${error.message}`);
     }
 }
 
@@ -226,6 +257,34 @@ function render(filename, items) {
     for (const item of items) {
         const card = document.createElement("div");
         card.className = "card";
+        card.draggable = true;
+        card.addEventListener("dragstart", event => {
+            if (event.target.closest("input, a")) { event.preventDefault(); return; }
+            card.classList.add("dragging");
+            event.dataTransfer.effectAllowed = "move";
+            event.dataTransfer.setData("text/plain", String(items.indexOf(item)));
+        });
+        card.addEventListener("dragend", () => {
+            card.classList.remove("dragging");
+            GRID.querySelectorAll(".drag-over").forEach(element => element.classList.remove("drag-over"));
+        });
+        card.addEventListener("dragover", event => {
+            event.preventDefault();
+            event.dataTransfer.dropEffect = "move";
+            card.classList.add("drag-over");
+        });
+        card.addEventListener("dragleave", event => {
+            if (!card.contains(event.relatedTarget)) card.classList.remove("drag-over");
+        });
+        card.addEventListener("drop", event => {
+            event.preventDefault();
+            card.classList.remove("drag-over");
+            const fromIndex = Number(event.dataTransfer.getData("text/plain"));
+            const toIndex = items.indexOf(item);
+            if (Number.isInteger(fromIndex) && fromIndex >= 0 && fromIndex < items.length) {
+                reorderItems(filename, items, fromIndex, toIndex);
+            }
+        });
         const image = document.createElement(item.img ? "img" : "div");
         if (item.img) { image.src = item.img; image.loading = "lazy"; image.alt = item.name; }
         else image.className = "ph";
@@ -275,3 +334,10 @@ function render(filename, items) {
     GRID.appendChild(fragment);
 }
 loadFileList();
+
+document.addEventListener("keydown", e => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        showToast("Schtop it. Schtop it Madhav.");
+    }
+});

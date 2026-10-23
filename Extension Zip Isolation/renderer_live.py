@@ -40,6 +40,16 @@ def renderer_live_javascript():
     return send_from_directory(BASE_DIR, "renderer_live.js")
 
 
+@app.get("/icons/Horikita.ico")
+def horikita_icon():
+    return send_from_directory(os.path.join(BASE_DIR, "icons"), "Horikita.ico")
+
+
+@app.get("/favicon.ico")
+def favicon():
+    return send_from_directory(os.path.join(BASE_DIR, "icons"), "Horikita.ico")
+
+
 @app.get("/api/extensions/files")
 def list_csv_files():
     files = [

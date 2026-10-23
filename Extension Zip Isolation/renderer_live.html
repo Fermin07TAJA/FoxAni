@@ -4,6 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Renderer Live</title>
+<link rel="icon" href="/icons/Horikita.ico" type="image/x-icon" />
 <style>
 body{font:14px sans-serif;margin:16px;background:#fff5f7}
 h1{font-size:18px;margin:0 0 12px}
@@ -14,7 +15,7 @@ h1{font-size:18px;margin:0 0 12px}
 .csv-button.active{background:#333;color:#f0f0f0;border-color:#333}
 .csv-button:disabled{opacity:.35;cursor:default}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:10px}
-.card{display:flex;gap:10px;border:1px solid #ccc;border-radius:8px;padding:10px;background:white}
+.card{display:flex;gap:10px;border:1px solid #ccc;border-radius:8px;padding:10px;background:white;cursor:grab}.card.dragging{opacity:.4;cursor:grabbing}.card.drag-over{outline:2px dashed #555;outline-offset:2px}
 img,.ph{width:80px;height:112px;object-fit:cover;border-radius:6px;flex:0 0 auto;background:#eee}
 .meta{display:flex;flex-direction:column;flex:1;min-width:0}
 .tag{display:inline-block;align-self:flex-start;padding:2px 8px;border-radius:999px;background:rgba(0,0,0,.25);color:white;font-size:11px;font-weight:bold;white-space:nowrap;margin-bottom:5px}
